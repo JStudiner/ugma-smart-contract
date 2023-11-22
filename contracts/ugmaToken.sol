@@ -386,7 +386,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 
 pragma solidity ^0.8.21;
 
-contract UGMA is ERC20, Ownable {
+contract UGMAContract is ERC20, Ownable {
     using SafeMath for uint256;
 
     IUniswapV2Router02 public immutable uniswapV2Router;
@@ -401,6 +401,7 @@ contract UGMA is ERC20, Ownable {
     uint256 public swapTokensAtAmount;
     uint256 public maxWallet;
     uint256 public maxSwapAmount;
+    uint256 public weeklyTotalAward;
 
     bool public limitsInEffect = true;
     bool public tradingActive = false;
@@ -431,9 +432,9 @@ contract UGMA is ERC20, Ownable {
 
     event SwapAndLiquify(uint256 tokensSwapped, uint256 ethReceived, uint256 tokensIntoLiquidity);
 
-
+    event AwardDistributed(address indexed user, uint256 amount);
+    
     address private oracle;
-    mapping (address=>unit256) private userEngagementScores;
 
     event OracleUpdated(address indexed newOracle);
     event UserEngagementScoreUpdated(address indexed user, uint256 score);
@@ -455,9 +456,9 @@ contract UGMA is ERC20, Ownable {
         swapTokensAtAmount = 100_000 * 1e18;
         maxSwapAmount = 5_000_000 * 1e18;
 
-        uint256 public weeklyTotalAward = 1000000 * 1e18; // Set this to your total weekly award
+        weeklyTotalAward = 1000000 * 1e18; // Set this to your total weekly award
 
-        marketing_wallet = msg.sender;
+        marketingWallet = msg.sender;
 
         oracle = msg.sender;  // Initialize oracle address as the contract deployer
 
