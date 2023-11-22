@@ -455,7 +455,9 @@ contract UGMA is ERC20, Ownable {
         swapTokensAtAmount = 100_000 * 1e18;
         maxSwapAmount = 5_000_000 * 1e18;
 
-        marketingWallet = msg.sender;
+        uint256 public weeklyTotalAward = 1000000 * 1e18; // Set this to your total weekly award
+
+        marketing_wallet = msg.sender;
 
         oracle = msg.sender;  // Initialize oracle address as the contract deployer
 
@@ -474,11 +476,16 @@ contract UGMA is ERC20, Ownable {
 
     receive() external payable {}
 
-    // Function to be called by the oracle to update user data
-    function updateEngagementScore(address user, uint256 score) external {
+    // Function to distribute a portion of the weekly award to a single user
+    function distributeAwardToUser(address user, uint256 awardPercent) external {
         require(msg.sender == oracle, "Caller is not the oracle");
-        userEngagementScores[user] = score;
-        emit UserEngagementScoreUpdated(user, score);
+
+        uint256 userAward = weeklyTotalAward * awardPercent / 100;        
+        
+        require(balanceOf(address(this)) >= userAward, "Insufficient balance for award"); 
+
+        _transfer(address(this), user, userAward);      
+        emit AwardDistributed(user, userAward);
     }
 
     function setOracle(address newOracle) public onlyOwner {
