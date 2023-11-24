@@ -386,7 +386,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 
 pragma solidity ^0.8.21;
 
-contract UGMAContract is ERC20, Ownable {
+contract UGMA2Contract is ERC20, Ownable {
     using SafeMath for uint256;
 
     IUniswapV2Router02 public immutable uniswapV2Router;
@@ -437,9 +437,12 @@ contract UGMAContract is ERC20, Ownable {
     address private oracle;
 
     event OracleUpdated(address indexed newOracle);
+
     event UserEngagementScoreUpdated(address indexed user, uint256 score);
 
-    constructor() ERC20("UGMA Coin", "UGMA") {
+    uint256 constant SCALE = 1e18;
+
+    constructor() ERC20("UGMA2 Coin", "UGMA2") {
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
 
         excludeFromMaxTransaction(address(_uniswapV2Router), true);
@@ -456,7 +459,7 @@ contract UGMAContract is ERC20, Ownable {
         swapTokensAtAmount = 100_000 * 1e18;
         maxSwapAmount = 5_000_000 * 1e18;
 
-        weeklyTotalAward = 1000000 * 1e18; // Set this to your total weekly award
+        weeklyTotalAward = 10_000_000 * 1e18; // Set this to your total weekly award
 
         marketingWallet = msg.sender;
 
@@ -470,22 +473,27 @@ contract UGMAContract is ERC20, Ownable {
         excludeFromMaxTransaction(address(this), true);
         excludeFromMaxTransaction(address(0xdead), true);
 
-        
-
+          
         _mint(msg.sender, totalSupply);
     }
 
     receive() external payable {}
 
     // Function to distribute a portion of the weekly award to a single user
-    function distributeAwardToUser(address user, uint256 awardPercent) external {
+    function distributeAwardToUser(address user, uint256 awardPercentSixDecimal) external {
         require(msg.sender == oracle, "Caller is not the oracle");
 
-        uint256 userAward = weeklyTotalAward * awardPercent / 100;        
-        
-        require(balanceOf(address(this)) >= userAward, "Insufficient balance for award"); 
+        // Adjust for the six decimal places in the awardPercent
+        uint256 awardPercentScaled = awardPercentSixDecimal * (SCALE / 1e6); // Adjusting to the contract's scaling factor
 
-        _transfer(address(this), user, userAward);      
+        require(awardPercentScaled <= SCALE, "Award percent exceeds 100%");
+
+        uint256 userAward = (weeklyTotalAward * awardPercentScaled) / SCALE;
+
+        require(balanceOf(address(this)) >= userAward, "Insufficient balance for award");
+
+        _transfer(address(this), user, userAward);
+
         emit AwardDistributed(user, userAward);
     }
 
